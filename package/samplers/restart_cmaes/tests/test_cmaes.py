@@ -17,15 +17,6 @@ from optuna.trial import FrozenTrial
 import pytest
 
 
-# module = optunahub.load_module(
-#     # category is one of [pruners, samplers, visualization].
-#     package="samplers/restart_cmaes",
-#     repo_owner="sawa3030",
-#     ref="remove-options",
-# )
-# RestartCmaEsSampler = module.RestartCmaEsSampler
-
-# sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "~/pfn/optunahub-registry/package/samplers/restart_cmaes/__init__")))
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from restart_cmaes import RestartCmaEsSampler
 
@@ -61,54 +52,6 @@ def test_init_cmaes_opts(popsize: int | None) -> None:
         assert actual_kwargs["n_max_resampling"] == 10 * 2
         expected_popsize = 4 + math.floor(3 * math.log(2)) if popsize is None else popsize
         assert actual_kwargs["population_size"] == expected_popsize
-
-
-# source_trial is needed
-# @pytest.mark.filterwarnings("ignore::optuna.exceptions.ExperimentalWarning")
-# def test_warm_starting_cmaes() -> None:
-#     def objective(trial: optuna.Trial) -> float:
-#         x = trial.suggest_float("x", -10, 10)
-#         y = trial.suggest_int("y", -10, 10)
-#         return x**2 + y
-
-#     source_study = optuna.create_study()
-#     source_study.optimize(objective, 20)
-#     source_trials = source_study.get_trials(deepcopy=False)
-
-#     with patch("restart_cmaes.cmaes.get_warm_start_mgd") as mock_func_ws:
-#         mock_func_ws.return_value = (np.zeros(2), 0.0, np.zeros((2, 2)))
-#         sampler = RestartCmaEsSampler(
-#             seed=1, n_startup_trials=1
-#         )
-#         study = optuna.create_study(sampler=sampler)
-#         study.optimize(objective, 2)
-#         assert mock_func_ws.call_count == 1
-
-
-# @pytest.mark.filterwarnings("ignore::optuna.exceptions.ExperimentalWarning")
-# def test_warm_starting_cmaes_maximize() -> None:
-#     def objective(trial: optuna.Trial) -> float:
-#         x = trial.suggest_float("x", -10, 10)
-#         y = trial.suggest_int("y", -10, 10)
-#         # Objective values are negative.
-#         return -(x**2) - (y - 5) ** 2
-
-#     source_study = optuna.create_study(direction="maximize")
-#     source_study.optimize(objective, 20)
-#     source_trials = source_study.get_trials(deepcopy=False)
-
-#     with patch("optuna.samplers._cmaes.cmaes.get_warm_start_mgd") as mock_func_ws:
-#         mock_func_ws.return_value = (np.zeros(2), 0.0, np.zeros((2, 2)))
-#         sampler = RestartCmaEsSampler(
-#             seed=1, n_startup_trials=1
-#         )
-#         study = optuna.create_study(sampler=sampler, direction="maximize")
-#         study.optimize(objective, 2)
-#         assert mock_func_ws.call_count == 1
-
-#         solutions_arg = mock_func_ws.call_args[0][0]
-#         is_positive = [x[1] >= 0 for x in solutions_arg]
-#         assert all(is_positive)
 
 
 @pytest.mark.filterwarnings("ignore::optuna.exceptions.ExperimentalWarning")
@@ -162,25 +105,6 @@ def test_sample_relative_n_startup_trials() -> None:
         study.optimize(objective, n_trials=4, catch=(Exception,))
         assert mock_independent.call_count == 6  # The objective function has two parameters.
         assert mock_relative.call_count == 4
-
-
-# consider_pruned_trials is needed
-# def test_get_trials() -> None:
-#     with patch(
-#         "optuna.Study._get_trials",
-#         new=Mock(side_effect=lambda deepcopy, use_cache: _create_trials()),
-#     ):
-#         sampler = RestartCmaEsSampler()
-#         study = optuna.create_study(sampler=sampler)
-#         trials = sampler._get_trials(study)
-#         assert len(trials) == 1
-
-#         sampler = RestartCmaEsSampler()
-#         study = optuna.create_study(sampler=sampler)
-#         trials = sampler._get_trials(study)
-#         assert len(trials) == 2
-#         assert trials[0].value == 1.0
-#         assert trials[1].value == 2.0
 
 
 def _create_trials() -> list[FrozenTrial]:
@@ -480,50 +404,6 @@ def test_is_compatible_search_space() -> None:
             "x1": optuna.distributions.CategoricalDistribution(["foo", "bar", "baz", "qux"]),
         },
     )
-
-
-# probably failing to capture the log
-# @pytest.mark.parametrize("warn_independent_sampling", [True, False])
-# def test_warn_independent_sampling(
-#     capsys: _pytest.capture.CaptureFixture, warn_independent_sampling: bool
-# ) -> None:
-#     def objective_single(trial: optuna.trial.Trial) -> float:
-#         return trial.suggest_float("x", 0, 1)
-
-#     def objective_shrink(trial: optuna.trial.Trial) -> float:
-#         if trial.number != 5:
-#             x = trial.suggest_float("x", 0, 1)
-#             y = trial.suggest_float("y", 0, 1)
-#             z = trial.suggest_float("z", 0, 1)
-#             return x + y + z
-#         else:
-#             x = trial.suggest_float("x", 0, 1)
-#             y = trial.suggest_float("y", 0, 1)
-#             return x + y
-
-#     def objective_expand(trial: optuna.trial.Trial) -> float:
-#         if trial.number != 5:
-#             x = trial.suggest_float("x", 0, 1)
-#             y = trial.suggest_float("y", 0, 1)
-#             return x + y
-#         else:
-#             x = trial.suggest_float("x", 0, 1)
-#             y = trial.suggest_float("y", 0, 1)
-#             z = trial.suggest_float("z", 0, 1)
-#             return x + y + z
-
-#     for objective in [objective_single, objective_shrink, objective_expand]:
-#         # We need to reconstruct our default handler to properly capture stderr.
-#         optuna.logging._reset_library_root_logger()
-#         optuna.logging.enable_default_handler()
-#         optuna.logging.set_verbosity(optuna.logging.WARNING)
-
-#         sampler = RestartCmaEsSampler(warn_independent_sampling=warn_independent_sampling)
-#         study = optuna.create_study(sampler=sampler)
-#         study.optimize(objective, n_trials=10)
-
-#         _, err = capsys.readouterr()
-#         assert (err != "") == warn_independent_sampling
 
 
 @pytest.mark.filterwarnings("ignore::optuna.exceptions.ExperimentalWarning")
