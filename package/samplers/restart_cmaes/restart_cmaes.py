@@ -150,14 +150,10 @@ class RestartCmaEsSampler(BaseSampler):
             latest_trial = completed_trials[-1]
 
             if self._use_system_attrs:
-                popsize_attr_key = self._attr_keys.popsize()
-                if popsize_attr_key in latest_trial.system_attrs:
-                    popsize = latest_trial.system_attrs[popsize_attr_key]
-                else:
-                    popsize = self._initial_popsize
-
-                n_restarts_attr_key = self._attr_keys.n_restarts()
-                n_restarts = latest_trial.system_attrs.get(n_restarts_attr_key, 0)
+                popsize = latest_trial.system_attrs.get(
+                    self._attr_keys.popsize(), self._initial_popsize
+                )
+                n_restarts = latest_trial.system_attrs.get(self._attr_keys.n_restarts(), 0)
                 n_restarts_with_large = latest_trial.system_attrs.get(
                     self._attr_keys.n_restarts_with_large, 0
                 )
@@ -175,10 +171,10 @@ class RestartCmaEsSampler(BaseSampler):
                     small_n_eval = 0
                     large_n_eval = 0
                 else:
-                    popsize_attr_key = self._attr_keys.popsize()
-                    popsize = latest_trial_attr.get(popsize_attr_key, self._initial_popsize)
-                    n_restarts_attr_key = self._attr_keys.n_restarts()
-                    n_restarts = latest_trial_attr.get(n_restarts_attr_key, 0)
+                    popsize = latest_trial_attr.get(
+                        self._attr_keys.popsize(), self._initial_popsize
+                    )
+                    n_restarts = latest_trial_attr.get(self._attr_keys.n_restarts(), 0)
                     n_restarts_with_large = latest_trial_attr.get(
                         self._attr_keys.n_restarts_with_large, 0
                     )
@@ -375,16 +371,14 @@ class RestartCmaEsSampler(BaseSampler):
     ) -> "CmaClass" | None:
         # Restore a previous CMA object.
         for trial in reversed(completed_trials):
-            # optimizer_attrs = {
-            #     key: value
-            #     for key, value in trial.system_attrs.items()
-            #     if key.startswith(self._attr_keys.optimizer(n_restarts))
-            # }
+            items = (
+                trial.system_attrs.items()
+                if self._use_system_attrs
+                else self._optimizer_metadata_by_trial.get(trial._trial_id, {}).items()
+            )
             optimizer_attrs = {
                 key: value
-                for key, value in self._optimizer_metadata_by_trial.get(
-                    trial._trial_id, {}
-                ).items()
+                for key, value in items
                 if key.startswith(self._attr_keys.optimizer(n_restarts))
             }
             if len(optimizer_attrs) == 0:
@@ -477,13 +471,18 @@ class RestartCmaEsSampler(BaseSampler):
         self, trials: list[FrozenTrial], generation: int, n_restarts: int
     ) -> list[FrozenTrial]:
         generation_attr_key = self._attr_keys.generation(n_restarts)
-        # return [t for t in trials if generation == t.system_attrs.get(generation_attr_key, -1)]
-        return [
-            t
-            for t in trials
-            if generation
-            == self._optimizer_metadata_by_trial.get(t._trial_id, {}).get(generation_attr_key, -1)
-        ]
+        solution_trials = []
+        for t in trials:
+            generation_of_trial = (
+                t.system_attrs.get(generation_attr_key, -1)
+                if self._use_system_attrs
+                else self._optimizer_metadata_by_trial.get(t._trial_id, {}).get(
+                    generation_attr_key, -1
+                )
+            )
+            if generation_of_trial == generation:
+                solution_trials.append(t)
+        return solution_trials
 
     def before_trial(self, study: optuna.Study, trial: FrozenTrial) -> None:
         self._independent_sampler.before_trial(study, trial)
