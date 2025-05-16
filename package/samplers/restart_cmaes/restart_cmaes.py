@@ -12,7 +12,6 @@ import cmaes
 import numpy as np
 import optuna
 from optuna import logging
-from optuna._experimental import warn_experimental_argument
 from optuna._transform import _SearchSpaceTransform
 from optuna.distributions import BaseDistribution
 from optuna.distributions import FloatDistribution
@@ -73,9 +72,6 @@ class RestartCmaEsSampler(BaseSampler):
         self._use_system_attrs = use_system_attrs
         if not self._use_system_attrs:
             self._optimizer_metadata_by_trial: dict[int, dict[str, Any]] = {}
-
-        if self._restart_strategy:
-            warn_experimental_argument("restart_strategy")
 
         if restart_strategy not in (
             "ipop",
