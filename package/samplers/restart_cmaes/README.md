@@ -1,5 +1,5 @@
 ---
-author: Optuna team
+author: 
 title: CMA-ES Sampler that support IPOP-CMA-ES and BIPOP-CMA-ES
 description: A CMA-ES-based sampler that supports advanced restart strategies, IPOP-CMA-ES and BIPOP-CMA-ES.
 tags: [sampler, CMA-ES, IPOP-CMA-ES, BIPOP-CMA-ES]
