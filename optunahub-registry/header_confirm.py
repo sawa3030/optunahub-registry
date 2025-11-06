@@ -18,6 +18,16 @@ def header_confirm(path: str) -> None:
     assert post["tags"] != "", f"tags is empty in {path}"
     assert post["optuna_versions"] != "", f"optuna_versions is empty in {path}"
     assert post["license"] != "", f"license is empty in {path}"
+    assert post["author"] != "" and post["author"] is not None, f"author is empty in {path}"
+    assert post["title"] != "" and post["title"] is not None, f"title is empty in {path}"
+    assert (
+        post["description"] != "" and post["description"] is not None
+    ), f"description is empty in {path}"
+    assert post["tags"] != "" and post["tags"] is not None, f"tags is empty in {path}"
+    assert (
+        post["optuna_versions"] != "" and post["optuna_versions"] is not None
+    ), f"optuna_versions is empty in {path}"
+    assert post["license"] != "" and post["license"] is not None, f"license is empty in {path}"
 
 
 if __name__ == "__main__":
