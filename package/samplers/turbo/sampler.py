@@ -155,6 +155,8 @@ class TuRBOSampler(BaseSampler):
         self._cached_acqf_by_tr: list[np.ndarray | None] = [
             None for _ in range(self._n_trust_region)
         ]
+        self._ub_by_tr: list[np.ndarray | None] = [None for _ in range(self._n_trust_region)]
+        self._lb_by_tr: list[np.ndarray | None] = [None for _ in range(self._n_trust_region)]
 
     def _reset_trust_region(self, delete_trust_region_id: int) -> None:
         self._trial_ids_for_trust_region[delete_trust_region_id] = []
@@ -284,6 +286,16 @@ class TuRBOSampler(BaseSampler):
             trust_region = np.empty((len(search_space), 2), dtype=float)
             trust_region[:, 0] = np.maximum(0.0, best_params - trust_region_length / 2)
             trust_region[:, 1] = np.minimum(1.0, best_params + trust_region_length / 2)
+
+            unnormalized_upper_bounds = internal_search_space.get_unnormalized_param(
+                trust_region[:, 1:2]
+            )
+            unnormalized_lower_bounds = internal_search_space.get_unnormalized_param(
+                trust_region[:, 0:1]
+            )
+            self._ub_by_tr[id] = unnormalized_upper_bounds
+            self._lb_by_tr[id] = unnormalized_lower_bounds
+
             acqf.search_space.set_trust_region(trust_region)
             normalized_param, acqf_val = self._optimize_acqf(acqf, best_params)
 
