@@ -237,7 +237,6 @@ class HEBOSampler(optunahub.samplers.SimpleBaseSampler):
     def sample_relative(
         self, study: Study, trial: FrozenTrial, search_space: dict[str, BaseDistribution]
     ) -> dict[str, Any]:
-        assert False, "should fail here"
         if study._is_multi_objective() and not self._multi_objective:
             raise ValueError(
                 f"To use {self.__class__.__name__} for multi-objective optimization, please specify the 'num_obj' parameter."
