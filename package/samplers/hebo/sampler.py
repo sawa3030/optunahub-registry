@@ -108,6 +108,7 @@ class HEBOSampler(optunahub.samplers.SimpleBaseSampler):
         hebo: HEBO | GeneralBO, search_space: dict[str, BaseDistribution]
     ) -> dict[str, float]:
         params = {}
+        assert False, "should fail"
         for name, row in hebo.suggest().items():
             if name not in search_space:
                 continue
