@@ -127,10 +127,10 @@ class HEBOSampler(optunahub.samplers.SimpleBaseSampler):
 
             if isinstance(value, np.generic):
                 value = value.item()
-            if isinstance(dist, IntDistribution):
-                value = int(value)
-            elif isinstance(dist, FloatDistribution):
-                value = float(value)
+            # if isinstance(dist, IntDistribution):
+            #     value = int(value)
+            # elif isinstance(dist, FloatDistribution):
+            #     value = float(value)
 
             params[name] = value
 
