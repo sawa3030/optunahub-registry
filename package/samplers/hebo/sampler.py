@@ -119,9 +119,20 @@ class HEBOSampler(optunahub.samplers.SimpleBaseSampler):
                 and dist.step is not None
             ):
                 step_index = row.iloc[0]
-                params[name] = dist.low + step_index * dist.step
+                # params[name] = dist.low + step_index * dist.step
+                value = dist.low + step_index * dist.step
             else:
-                params[name] = row.iloc[0]
+                # params[name] = row.iloc[0]
+                value = row.iloc[0]
+
+            if isinstance(value, np.generic):
+                value = value.item()
+            if isinstance(dist, IntDistribution):
+                value = int(value)
+            elif isinstance(dist, FloatDistribution):
+                value = float(value)
+
+            params[name] = value
 
         return params
 
